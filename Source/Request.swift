@@ -193,7 +193,7 @@ public class Request {
         let progress: NSProgress
 
         var data: NSData? { return nil }
-        var error: ErrorType?
+        var error: Error?
 
         var credential: NSURLCredential?
 
@@ -304,7 +304,7 @@ public class Request {
                 taskDidCompleteWithError(session, task, error)
             } else {
                 if let error = error {
-                    self.error = error
+                    self.error = Error(code: error.code, failureReason: error.localizedFailureReason)
 
                     if let
                         downloadDelegate = self as? DownloadTaskDelegate,

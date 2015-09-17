@@ -21,25 +21,14 @@
 // THE SOFTWARE.
 
 import Foundation
+import Result
 
 extension Request {
-
-    /**
-        Used to represent whether validation was successful or encountered an error resulting in a failure.
-
-        - Success: The validation was successful.
-        - Failure: The validation failed encountering the provided error.
-    */
-    public enum ValidationResult {
-        case Success
-        case Failure(ErrorType)
-    }
-
     /**
         A closure used to validate a request that takes a URL request and URL response, and returns whether the 
         request was valid.
     */
-    public typealias Validation = (NSURLRequest?, NSHTTPURLResponse) -> ValidationResult
+    public typealias Validation = (NSURLRequest?, NSHTTPURLResponse) -> Result<Void, Error>
 
     /**
         Validates the request, using the specified closure.
@@ -77,10 +66,10 @@ extension Request {
     public func validate<S: SequenceType where S.Generator.Element == Int>(statusCode acceptableStatusCode: S) -> Self {
         return validate { _, response in
             if acceptableStatusCode.contains(response.statusCode) {
-                return .Success
+                return .Success()
             } else {
                 let failureReason = "Response status code was unacceptable: \(response.statusCode)"
-                return .Failure(Error.errorWithCode(.StatusCodeValidationFailed, failureReason: failureReason))
+                return .Failure(Error(code: .StatusCodeValidationFailed, failureReason: failureReason))
             }
         }
     }
@@ -136,13 +125,13 @@ extension Request {
             {
                 for contentType in acceptableContentTypes {
                     if let acceptableMIMEType = MIMEType(contentType) where acceptableMIMEType.matches(responseMIMEType) {
-                        return .Success
+                        return .Success()
                     }
                 }
             } else {
                 for contentType in acceptableContentTypes {
                     if let MIMEType = MIMEType(contentType) where MIMEType.type == "*" && MIMEType.subtype == "*" {
-                        return .Success
+                        return .Success()
                     }
                 }
             }
@@ -158,7 +147,7 @@ extension Request {
                 failureReason = "Response content type was missing and acceptable content type does not match \"*/*\""
             }
 
-            return .Failure(Error.errorWithCode(.ContentTypeValidationFailed, failureReason: failureReason))
+            return .Failure(Error(code: .ContentTypeValidationFailed, failureReason: failureReason))
         }
     }
 

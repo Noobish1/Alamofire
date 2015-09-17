@@ -15,4 +15,8 @@ Pod::Spec.new do |s|
   s.source_files = 'Source/*.swift'
 
   s.requires_arc = true
+
+  s.subspec "Core" do |ss|
+      ss.dependency "Result"
+  end
 end

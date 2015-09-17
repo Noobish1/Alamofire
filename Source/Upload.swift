@@ -21,6 +21,7 @@
 // THE SOFTWARE.
 
 import Foundation
+import Result
 
 extension Manager {
     private enum Uploadable {
@@ -200,10 +201,12 @@ extension Manager {
         - Failure: Used to represent a failure in the `MultipartFormData` encoding and also contains the encoding 
                    error.
     */
-    public enum MultipartFormDataEncodingResult {
-        case Success(request: Request, streamingFromDisk: Bool, streamFileURL: NSURL?)
-        case Failure(ErrorType)
-    }
+    public typealias MultipartFormDataEncodingResult = (request: Request, streamingFromDisk: Bool, streamFileURL: NSURL?)
+    
+//    public enum MultipartFormDataEncodingResult {
+//        case Success(request: Request, streamingFromDisk: Bool, streamFileURL: NSURL?)
+//        case Failure(ErrorType)
+//    }
 
     /**
         Encodes the `MultipartFormData` and creates a request to upload the result to the specified URL request.
@@ -237,7 +240,7 @@ extension Manager {
         headers: [String: String]? = nil,
         multipartFormData: MultipartFormData -> Void,
         encodingMemoryThreshold: UInt64 = Manager.MultipartFormDataEncodingMemoryThreshold,
-        encodingCompletion: (MultipartFormDataEncodingResult -> Void)?)
+        encodingCompletion: (Result<MultipartFormDataEncodingResult, Error> -> Void)?)
     {
         let mutableURLRequest = URLRequest(method, URLString, headers: headers)
 
@@ -277,7 +280,7 @@ extension Manager {
         URLRequest: URLRequestConvertible,
         multipartFormData: MultipartFormData -> Void,
         encodingMemoryThreshold: UInt64 = Manager.MultipartFormDataEncodingMemoryThreshold,
-        encodingCompletion: (MultipartFormDataEncodingResult -> Void)?)
+        encodingCompletion: (Result<MultipartFormDataEncodingResult, Error> -> Void)?)
     {
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)) {
             let formData = MultipartFormData()
@@ -291,18 +294,14 @@ extension Manager {
             if formData.contentLength < encodingMemoryThreshold && !isBackgroundSession {
                 do {
                     let data = try formData.encode()
-                    let encodingResult = MultipartFormDataEncodingResult.Success(
-                        request: self.upload(URLRequestWithContentType, data: data),
-                        streamingFromDisk: false,
-                        streamFileURL: nil
-                    )
+                    let request = self.upload(URLRequestWithContentType, data: data)
 
                     dispatch_async(dispatch_get_main_queue()) {
-                        encodingCompletion?(encodingResult)
+                        encodingCompletion?(.Success((request: request, streamingFromDisk: false, streamFileURL: nil)))
                     }
-                } catch {
+                } catch let error as NSError {
                     dispatch_async(dispatch_get_main_queue()) {
-                        encodingCompletion?(.Failure(error as NSError))
+                        encodingCompletion?(.Failure(Error(code : error.code, failureReason: error.localizedFailureReason)))
                     }
                 }
             } else {
@@ -317,16 +316,13 @@ extension Manager {
                     try formData.writeEncodedDataToDisk(fileURL)
 
                     dispatch_async(dispatch_get_main_queue()) {
-                        let encodingResult = MultipartFormDataEncodingResult.Success(
-                            request: self.upload(URLRequestWithContentType, file: fileURL),
-                            streamingFromDisk: true,
-                            streamFileURL: fileURL
-                        )
-                        encodingCompletion?(encodingResult)
+                        let request = self.upload(URLRequestWithContentType, file: fileURL)
+                        
+                        encodingCompletion?(.Success((request: request, streamingFromDisk: true, streamFileURL: fileURL)))
                     }
-                } catch {
+                } catch let error as NSError {
                     dispatch_async(dispatch_get_main_queue()) {
-                        encodingCompletion?(.Failure(error as NSError))
+                        encodingCompletion?(.Failure(Error(code : error.code, failureReason: error.localizedFailureReason)))
                     }
                 }
             }

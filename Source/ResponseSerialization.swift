@@ -21,6 +21,9 @@
 // THE SOFTWARE.
 
 import Foundation
+import Result
+
+
 
 // MARK: ResponseSerializer
 
@@ -34,7 +37,7 @@ public protocol ResponseSerializer {
     /**
         A closure used by response handlers that takes a request, response, and data and returns a result.
     */
-    var serializeResponse: (NSURLRequest?, NSHTTPURLResponse?, NSData?) -> Result<SerializedObject> { get }
+    var serializeResponse: (NSURLRequest?, NSHTTPURLResponse?, NSData?) -> Result<SerializedObject, SerializationError> { get }
 }
 
 // MARK: -
@@ -49,7 +52,7 @@ public struct GenericResponseSerializer<T>: ResponseSerializer {
     /**
         A closure used by response handlers that takes a request, response, and data and returns a result.
     */
-    public var serializeResponse: (NSURLRequest?, NSHTTPURLResponse?, NSData?) -> Result<SerializedObject>
+    public var serializeResponse: (NSURLRequest?, NSHTTPURLResponse?, NSData?) -> Result<SerializedObject, SerializationError>
 
     /**
         Initializes the `GenericResponseSerializer` instance with the given serialize response closure.
@@ -58,7 +61,7 @@ public struct GenericResponseSerializer<T>: ResponseSerializer {
 
         - returns: The new generic response serializer instance.
     */
-    public init(serializeResponse: (NSURLRequest?, NSHTTPURLResponse?, NSData?) -> Result<SerializedObject>) {
+    public init(serializeResponse: (NSURLRequest?, NSHTTPURLResponse?, NSData?) -> Result<SerializedObject, SerializationError>) {
         self.serializeResponse = serializeResponse
     }
 }
@@ -77,7 +80,7 @@ extension Request {
     */
     public func response(
         queue queue: dispatch_queue_t? = nil,
-        completionHandler: (NSURLRequest?, NSHTTPURLResponse?, NSData?, ErrorType?) -> Void)
+        completionHandler: (NSURLRequest?, NSHTTPURLResponse?, NSData?, Error?) -> Void)
         -> Self
     {
         delegate.queue.addOperationWithBlock {
@@ -102,13 +105,14 @@ extension Request {
     public func response<T: ResponseSerializer, V where T.SerializedObject == V>(
         queue queue: dispatch_queue_t? = nil,
         responseSerializer: T,
-        completionHandler: (NSURLRequest?, NSHTTPURLResponse?, Result<V>) -> Void)
+        completionHandler: (NSURLRequest?, NSHTTPURLResponse?, Result<V, SerializationError>) -> Void)
         -> Self
     {
         delegate.queue.addOperationWithBlock {
-            let result: Result<T.SerializedObject> = {
+            let result: Result<T.SerializedObject, SerializationError> = {
                 if let error = self.delegate.error {
-                    return .Failure(self.delegate.data, error)
+                    let serializationError = SerializationError(code: error.code, failureReason: error.failureReason, originalData: self.delegate.data)
+                    return .Failure(serializationError)
                 } else {
                     return responseSerializer.serializeResponse(self.request, self.response, self.delegate.data)
                 }
@@ -136,8 +140,8 @@ extension Request {
         return GenericResponseSerializer { _, _, data in
             guard let validData = data else {
                 let failureReason = "Data could not be serialized. Input data was nil."
-                let error = Error.errorWithCode(.DataSerializationFailed, failureReason: failureReason)
-                return .Failure(data, error)
+                let error = SerializationError(code: .DataSerializationFailed, failureReason: failureReason, originalData: data)
+                return .Failure(error)
             }
 
             return .Success(validData)
@@ -151,7 +155,7 @@ extension Request {
 
         - returns: The request.
     */
-    public func responseData(completionHandler: (NSURLRequest?, NSHTTPURLResponse?, Result<NSData>) -> Void) -> Self {
+    public func responseData(completionHandler: (NSURLRequest?, NSHTTPURLResponse?, Result<NSData, SerializationError>) -> Void) -> Self {
         return response(responseSerializer: Request.dataResponseSerializer(), completionHandler: completionHandler)
     }
 }
@@ -176,8 +180,8 @@ extension Request {
         return GenericResponseSerializer { _, response, data in
             guard let validData = data else {
                 let failureReason = "String could not be serialized because input data was nil."
-                let error = Error.errorWithCode(.StringSerializationFailed, failureReason: failureReason)
-                return .Failure(data, error)
+                let error = SerializationError(code: .StringSerializationFailed, failureReason: failureReason, originalData: data)
+                return .Failure(error)
             }
 
             if let encodingName = response?.textEncodingName where encoding == nil {
@@ -192,8 +196,8 @@ extension Request {
                 return .Success(string)
             } else {
                 let failureReason = "String could not be serialized with encoding: \(actualEncoding)"
-                let error = Error.errorWithCode(.StringSerializationFailed, failureReason: failureReason)
-                return .Failure(data, error)
+                let error = SerializationError(code: .StringSerializationFailed, failureReason: failureReason, originalData: data)
+                return .Failure(error)
             }
         }
     }
@@ -212,7 +216,7 @@ extension Request {
     */
     public func responseString(
         encoding encoding: NSStringEncoding? = nil,
-        completionHandler: (NSURLRequest?, NSHTTPURLResponse?, Result<String>) -> Void)
+        completionHandler: (NSURLRequest?, NSHTTPURLResponse?, Result<String, SerializationError>) -> Void)
         -> Self
     {
         return response(
@@ -241,15 +245,16 @@ extension Request {
         return GenericResponseSerializer { _, _, data in
             guard let validData = data else {
                 let failureReason = "JSON could not be serialized because input data was nil."
-                let error = Error.errorWithCode(.JSONSerializationFailed, failureReason: failureReason)
-                return .Failure(data, error)
+                let error = SerializationError(code: .JSONSerializationFailed, failureReason: failureReason, originalData: data)
+                return .Failure(error)
             }
 
             do {
                 let JSON = try NSJSONSerialization.JSONObjectWithData(validData, options: options)
                 return .Success(JSON)
-            } catch {
-                return .Failure(data, error as NSError)
+            } catch let error as NSError {
+                let serializationError = SerializationError(code: error.code, failureReason: error.localizedFailureReason, originalData: data)
+                return .Failure(serializationError)
             }
         }
     }
@@ -266,7 +271,7 @@ extension Request {
     */
     public func responseJSON(
         options options: NSJSONReadingOptions = .AllowFragments,
-        completionHandler: (NSURLRequest?, NSHTTPURLResponse?, Result<AnyObject>) -> Void)
+        completionHandler: (NSURLRequest?, NSHTTPURLResponse?, Result<AnyObject, SerializationError>) -> Void)
         -> Self
     {
         return response(
@@ -295,15 +300,16 @@ extension Request {
         return GenericResponseSerializer { _, _, data in
             guard let validData = data else {
                 let failureReason = "Property list could not be serialized because input data was nil."
-                let error = Error.errorWithCode(.PropertyListSerializationFailed, failureReason: failureReason)
-                return .Failure(data, error)
+                let error = SerializationError(code: .PropertyListSerializationFailed, failureReason: failureReason, originalData: data)
+                return .Failure(error)
             }
 
             do {
                 let plist = try NSPropertyListSerialization.propertyListWithData(validData, options: options, format: nil)
                 return .Success(plist)
-            } catch {
-                return .Failure(data, error as NSError)
+            } catch let error as NSError {
+                let serializationError = SerializationError(code: error.code, failureReason: error.localizedFailureReason, originalData: data)
+                return .Failure(serializationError)
             }
         }
     }
@@ -320,7 +326,7 @@ extension Request {
     */
     public func responsePropertyList(
         options options: NSPropertyListReadOptions = NSPropertyListReadOptions(),
-        completionHandler: (NSURLRequest?, NSHTTPURLResponse?, Result<AnyObject>) -> Void)
+        completionHandler: (NSURLRequest?, NSHTTPURLResponse?, Result<AnyObject, SerializationError>) -> Void)
         -> Self
     {
         return response(

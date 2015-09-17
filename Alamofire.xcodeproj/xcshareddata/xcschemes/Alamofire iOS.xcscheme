@@ -21,11 +21,11 @@
             </BuildableReference>
          </BuildActionEntry>
          <BuildActionEntry
-            buildForTesting = "YES"
-            buildForRunning = "YES"
+            buildForTesting = "NO"
+            buildForRunning = "NO"
             buildForProfiling = "NO"
             buildForArchiving = "NO"
-            buildForAnalyzing = "YES">
+            buildForAnalyzing = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "F8111E3D19A95C8B0040E7D1"
@@ -43,16 +43,6 @@
       shouldUseLaunchSchemeArgsEnv = "YES"
       codeCoverageEnabled = "YES">
       <Testables>
-         <TestableReference
-            skipped = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "F8111E3D19A95C8B0040E7D1"
-               BuildableName = "Alamofire iOS Tests.xctest"
-               BlueprintName = "Alamofire iOS Tests"
-               ReferencedContainer = "container:Alamofire.xcodeproj">
-            </BuildableReference>
-         </TestableReference>
       </Testables>
       <MacroExpansion>
          <BuildableReference

@@ -1,0 +1,10 @@
+PODS:
+  - Result (0.6-beta.1)
+
+DEPENDENCIES:
+  - Result (= 0.6-beta.1)
+
+SPEC CHECKSUMS:
+  Result: 6c990ec4a72470672f9fc5b6fef009da0f6f40d1
+
+COCOAPODS: 0.38.2

@@ -101,7 +101,7 @@ public class MultipartFormData {
     public let boundary: String
 
     private var bodyParts: [BodyPart]
-    private var bodyPartError: NSError?
+    private var bodyPartError: Error?
     private let streamBufferSize: Int
 
     // MARK: - Lifecycle
@@ -217,7 +217,7 @@ public class MultipartFormData {
             appendBodyPart(fileURL: fileURL, name: name, fileName: fileName, mimeType: mimeType)
         } else {
             let failureReason = "Failed to extract the fileName of the provided URL: \(fileURL)"
-            setBodyPartError(Error.errorWithCode(NSURLErrorBadURL, failureReason: failureReason))
+            setBodyPartError(Error(code: NSURLErrorBadURL, failureReason: failureReason))
         }
     }
 
@@ -245,7 +245,7 @@ public class MultipartFormData {
 
         guard fileURL.fileURL else {
             let failureReason = "The file URL does not point to a file URL: \(fileURL)"
-            let error = Error.errorWithCode(NSURLErrorBadURL, failureReason: failureReason)
+            let error = Error(code: NSURLErrorBadURL, failureReason: failureReason)
             setBodyPartError(error)
             return
         }
@@ -261,7 +261,7 @@ public class MultipartFormData {
         }
 
         guard isReachable else {
-            let error = Error.errorWithCode(NSURLErrorBadURL, failureReason: "The file URL is not reachable: \(fileURL)")
+            let error = Error(code: NSURLErrorBadURL, failureReason: "The file URL is not reachable: \(fileURL)")
             setBodyPartError(error)
             return
         }
@@ -277,7 +277,7 @@ public class MultipartFormData {
             where NSFileManager.defaultManager().fileExistsAtPath(path, isDirectory: &isDirectory) && !isDirectory else
         {
             let failureReason = "The file URL is a directory, not a file: \(fileURL)"
-            let error = Error.errorWithCode(NSURLErrorBadURL, failureReason: failureReason)
+            let error = Error(code: NSURLErrorBadURL, failureReason: failureReason)
             setBodyPartError(error)
             return
         }
@@ -301,7 +301,7 @@ public class MultipartFormData {
 
         guard let length = bodyContentLength else {
             let failureReason = "Could not fetch attributes from the file URL: \(fileURL)"
-            let error = Error.errorWithCode(NSURLErrorBadURL, failureReason: failureReason)
+            let error = Error(code: NSURLErrorBadURL, failureReason: failureReason)
             setBodyPartError(error)
             return
         }
@@ -312,7 +312,7 @@ public class MultipartFormData {
 
         guard let stream = NSInputStream(URL: fileURL) else {
             let failureReason = "Failed to create an input stream from the file URL: \(fileURL)"
-            let error = Error.errorWithCode(NSURLErrorCannotOpenFile, failureReason: failureReason)
+            let error = Error(code: NSURLErrorCannotOpenFile, failureReason: failureReason)
             setBodyPartError(error)
             return
         }
@@ -413,10 +413,10 @@ public class MultipartFormData {
 
         if let path = fileURL.path where NSFileManager.defaultManager().fileExistsAtPath(path) {
             let failureReason = "A file already exists at the given file URL: \(fileURL)"
-            throw Error.errorWithCode(NSURLErrorBadURL, failureReason: failureReason)
+            throw Error(code: NSURLErrorBadURL, failureReason: failureReason)
         } else if !fileURL.fileURL {
             let failureReason = "The URL does not point to a valid file: \(fileURL)"
-            throw Error.errorWithCode(NSURLErrorBadURL, failureReason: failureReason)
+            throw Error(code: NSURLErrorBadURL, failureReason: failureReason)
         }
 
         let outputStream: NSOutputStream
@@ -425,7 +425,7 @@ public class MultipartFormData {
             outputStream = possibleOutputStream
         } else {
             let failureReason = "Failed to create an output stream with the given URL: \(fileURL)"
-            throw Error.errorWithCode(NSURLErrorCannotOpenFile, failureReason: failureReason)
+            throw Error(code: NSURLErrorCannotOpenFile, failureReason: failureReason)
         }
 
         outputStream.scheduleInRunLoop(NSRunLoop.currentRunLoop(), forMode: NSDefaultRunLoopMode)
@@ -479,15 +479,15 @@ public class MultipartFormData {
         inputStream.scheduleInRunLoop(NSRunLoop.currentRunLoop(), forMode: NSDefaultRunLoopMode)
         inputStream.open()
 
-        var error: NSError?
+        var error: Error?
         let encoded = NSMutableData()
 
         while inputStream.hasBytesAvailable {
             var buffer = [UInt8](count: streamBufferSize, repeatedValue: 0)
             let bytesRead = inputStream.read(&buffer, maxLength: streamBufferSize)
 
-            if inputStream.streamError != nil {
-                error = inputStream.streamError
+            if let streamError = inputStream.streamError {
+                error = Error(code: streamError.code, failureReason: streamError.localizedFailureReason)
                 break
             }
 
@@ -495,7 +495,7 @@ public class MultipartFormData {
                 encoded.appendBytes(buffer, length: bytesRead)
             } else if bytesRead < 0 {
                 let failureReason = "Failed to read from input stream: \(inputStream)"
-                error = Error.errorWithCode(.InputStreamReadFailed, failureReason: failureReason)
+                error = Error(code: .InputStreamReadFailed, failureReason: failureReason)
                 break
             } else {
                 break
@@ -556,7 +556,7 @@ public class MultipartFormData {
                 try writeBuffer(&buffer, toOutputStream: outputStream)
             } else if bytesRead < 0 {
                 let failureReason = "Failed to read from input stream: \(inputStream)"
-                throw Error.errorWithCode(.InputStreamReadFailed, failureReason: failureReason)
+                throw Error(code: .InputStreamReadFailed, failureReason: failureReason)
             } else {
                 break
             }
@@ -598,7 +598,7 @@ public class MultipartFormData {
 
                 if bytesWritten < 0 {
                     let failureReason = "Failed to write to output stream: \(outputStream)"
-                    throw Error.errorWithCode(.OutputStreamWriteFailed, failureReason: failureReason)
+                    throw Error(code: .OutputStreamWriteFailed, failureReason: failureReason)
                 }
 
                 bytesToWrite -= bytesWritten
@@ -661,7 +661,7 @@ public class MultipartFormData {
 
     // MARK: - Private - Errors
 
-    private func setBodyPartError(error: NSError) {
+    private func setBodyPartError(error: Error) {
         if bodyPartError == nil {
             bodyPartError = error
         }

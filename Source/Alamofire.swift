@@ -21,6 +21,7 @@
 // THE SOFTWARE.
 
 import Foundation
+import Result
 
 // MARK: - URLStringConvertible
 
@@ -268,7 +269,7 @@ public func upload(
     headers: [String: String]? = nil,
     multipartFormData: MultipartFormData -> Void,
     encodingMemoryThreshold: UInt64 = Manager.MultipartFormDataEncodingMemoryThreshold,
-    encodingCompletion: (Manager.MultipartFormDataEncodingResult -> Void)?)
+    encodingCompletion: (Result<Manager.MultipartFormDataEncodingResult, Error> -> Void)?)
 {
     return Manager.sharedInstance.upload(
         method,
@@ -293,7 +294,7 @@ public func upload(
     URLRequest: URLRequestConvertible,
     multipartFormData: MultipartFormData -> Void,
     encodingMemoryThreshold: UInt64 = Manager.MultipartFormDataEncodingMemoryThreshold,
-    encodingCompletion: (Manager.MultipartFormDataEncodingResult -> Void)?)
+    encodingCompletion: (Result<Manager.MultipartFormDataEncodingResult, Error> -> Void)?)
 {
     return Manager.sharedInstance.upload(
         URLRequest,
