@@ -17,6 +17,6 @@ Pod::Spec.new do |s|
   s.requires_arc = true
 
   s.subspec "Core" do |ss|
-      ss.dependency "Result"
+      ss.dependency 'Result', '0.6.0-beta.4'
   end
 end

@@ -97,7 +97,7 @@
 		E4202FD61B667AA100C997FB /* ServerTrustPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C811F8C1B51856D00E0F59A /* ServerTrustPolicy.swift */; };
 		E4202FD71B667AA100C997FB /* Download.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CDE2C3C1AF89D4900BABAE5 /* Download.swift */; };
 		E4202FD81B667AA100C997FB /* Validation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CDE2C421AF89F0900BABAE5 /* Validation.swift */; };
-		F0281855C903F6B7A2B6D609 /* Pods.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DC2D33DF079812523D761B8B /* Pods.framework */; settings = {ATTRIBUTES = (Weak, ); }; };
+		F0281855C903F6B7A2B6D609 /* Pods.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DC2D33DF079812523D761B8B /* Pods.framework */; };
 		F8111E3919A95C8B0040E7D1 /* Alamofire.h in Headers */ = {isa = PBXBuildFile; fileRef = F8111E3819A95C8B0040E7D1 /* Alamofire.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		F8111E6019A9674D0040E7D1 /* DownloadTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8111E5B19A9674D0040E7D1 /* DownloadTests.swift */; };
 		F8111E6119A9674D0040E7D1 /* ParameterEncodingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8111E5C19A9674D0040E7D1 /* ParameterEncodingTests.swift */; };

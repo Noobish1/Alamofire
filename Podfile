@@ -6,4 +6,4 @@ xcodeproj 'Alamofire'
 
 use_frameworks!
 
-pod 'Result', '0.6-beta.1'
+pod 'Result', '0.6.0-beta.4'
