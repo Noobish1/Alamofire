@@ -202,11 +202,11 @@ class RequestResponseTestCase: BaseTestCase {
 
         let expectation = self.expectation(description: "request should succeed")
 
-        var response: DataResponse<Any>?
+        var response: DefaultDataResponse?
 
         // When
         Alamofire.request(urlString, method: .post, parameters: parameters)
-            .responseJSON { closureResponse in
+            .response { closureResponse in
                 response = closureResponse
                 expectation.fulfill()
             }
@@ -218,7 +218,9 @@ class RequestResponseTestCase: BaseTestCase {
         XCTAssertNotNil(response?.response)
         XCTAssertNotNil(response?.data)
 
-        if let json = response?.result.value as? [String: Any], let form = json["form"] as? [String: String] {
+        let json = try! JSONSerialization.jsonObject(with: response!.data!, options: [])
+
+        if let json = json as? [String: Any], let form = json["form"] as? [String: String] {
             XCTAssertEqual(form["french"], parameters["french"])
             XCTAssertEqual(form["japanese"], parameters["japanese"])
             XCTAssertEqual(form["arabic"], parameters["arabic"])
@@ -254,11 +256,11 @@ class RequestResponseTestCase: BaseTestCase {
 
         let expectation = self.expectation(description: "request should succeed")
 
-        var response: DataResponse<Any>?
+        var response: DefaultDataResponse?
 
         // When
         Alamofire.request(urlString, method: .post, parameters: parameters)
-            .responseJSON { closureResponse in
+            .response { closureResponse in
                 response = closureResponse
                 expectation.fulfill()
             }
@@ -269,9 +271,10 @@ class RequestResponseTestCase: BaseTestCase {
         XCTAssertNotNil(response?.request)
         XCTAssertNotNil(response?.response)
         XCTAssertNotNil(response?.data)
-        XCTAssertEqual(response?.result.isSuccess, true)
 
-        if let json = response?.result.value as? [String: Any], let form = json["form"] as? [String: String] {
+        let json = try! JSONSerialization.jsonObject(with: response!.data!, options: [])
+
+        if let json = json as? [String: Any], let form = json["form"] as? [String: String] {
             XCTAssertEqual(form["email"], parameters["email"])
             XCTAssertEqual(form["png_image"], parameters["png_image"])
             XCTAssertEqual(form["jpeg_image"], parameters["jpeg_image"])

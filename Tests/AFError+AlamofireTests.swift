@@ -132,11 +132,6 @@ extension AFError {
         return false
     }
 
-    var isJSONSerializationFailed: Bool {
-        if case let .responseSerializationFailed(reason) = self, reason.isJSONSerializationFailed { return true }
-        return false
-    }
-
     // ResponseValidationFailureReason
 
     var isDataFileNil: Bool {
@@ -273,11 +268,6 @@ extension AFError.ResponseSerializationFailureReason {
 
     var isStringSerializationFailed: Bool {
         if case .stringSerializationFailed = self { return true }
-        return false
-    }
-
-    var isJSONSerializationFailed: Bool {
-        if case .jsonSerializationFailed = self { return true }
         return false
     }
 }

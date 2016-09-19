@@ -416,41 +416,4 @@ class DownloadResumeDataTestCase: BaseTestCase {
 
         XCTAssertEqual(response?.resumeData, download.resumeData)
     }
-
-    func testThatCancelledDownloadResumeDataIsAvailableWithJSONResponseSerializer() {
-        // Given
-        let expectation = self.expectation(description: "Download should be cancelled")
-        var cancelled = false
-
-        var response: DownloadResponse<Any>?
-
-        // When
-        let download = Alamofire.download(urlString)
-        download.downloadProgress { progress in
-            guard !cancelled else { return }
-
-            if progress.fractionCompleted > 0.1 {
-                download.cancel()
-                cancelled = true
-            }
-        }
-        download.responseJSON { resp in
-            response = resp
-            expectation.fulfill()
-        }
-
-        waitForExpectations(timeout: timeout, handler: nil)
-
-        // Then
-        XCTAssertNotNil(response?.request)
-        XCTAssertNotNil(response?.response)
-        XCTAssertNil(response?.destinationURL)
-        XCTAssertEqual(response?.result.isFailure, true)
-        XCTAssertNotNil(response?.result.error)
-
-        XCTAssertNotNil(response?.resumeData)
-        XCTAssertNotNil(download.resumeData)
-
-        XCTAssertEqual(response?.resumeData, download.resumeData)
-    }
 }

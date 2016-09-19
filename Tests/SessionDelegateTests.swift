@@ -84,7 +84,7 @@ class SessionDelegateTestCase: BaseTestCase {
             }
 
             // When
-            manager.request("https://httpbin.org/get").responseJSON { closureResponse in
+            manager.request("https://httpbin.org/get").response { closureResponse in
                 response = closureResponse.response
                 expectation.fulfill()
             }
@@ -115,7 +115,7 @@ class SessionDelegateTestCase: BaseTestCase {
         }
 
         // When
-        manager.request("https://httpbin.org/get").responseJSON { closureResponse in
+        manager.request("https://httpbin.org/get").response { closureResponse in
             response = closureResponse.response
             expectation.fulfill()
         }
@@ -446,11 +446,11 @@ class SessionDelegateTestCase: BaseTestCase {
 
         let expectation = self.expectation(description: "Request should redirect to \(redirectURLString)")
 
-        var response: DataResponse<Any>?
+        var response: DefaultDataResponse?
 
         // When
         manager.request(urlString, headers: headers)
-            .responseJSON { closureResponse in
+            .response { closureResponse in
                 response = closureResponse
                 expectation.fulfill()
             }
@@ -461,9 +461,10 @@ class SessionDelegateTestCase: BaseTestCase {
         XCTAssertNotNil(response?.request)
         XCTAssertNotNil(response?.response)
         XCTAssertNotNil(response?.data)
-        XCTAssertEqual(response?.result.isSuccess, true)
 
-        if let json = response?.result.value as? [String: Any], let headers = json["headers"] as? [String: String] {
+        let json = try! JSONSerialization.jsonObject(with: response!.data!, options: [])
+
+        if let json = json as? [String: Any], let headers = json["headers"] as? [String: String] {
             XCTAssertEqual(headers["Authorization"], "1234")
             XCTAssertEqual(headers["Custom-Header"], "foobar")
         }
@@ -484,7 +485,7 @@ class SessionDelegateTestCase: BaseTestCase {
         }
 
         // When
-        manager.request("https://httpbin.org/get").responseJSON { closureResponse in
+        manager.request("https://httpbin.org/get").response { closureResponse in
             response = closureResponse.response
             expectation.fulfill()
         }
@@ -509,7 +510,7 @@ class SessionDelegateTestCase: BaseTestCase {
         }
 
         // When
-        manager.request("https://httpbin.org/get").responseJSON { closureResponse in
+        manager.request("https://httpbin.org/get").response { closureResponse in
             response = closureResponse.response
             expectation.fulfill()
         }

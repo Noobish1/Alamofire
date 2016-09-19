@@ -559,12 +559,12 @@ class SessionManagerTestCase: BaseTestCase {
         sessionManager.retrier = handler
 
         let expectation = self.expectation(description: "request should eventually fail")
-        var response: DataResponse<Any>?
+        var response: DefaultDataResponse?
 
         // When
         sessionManager.request("https://httpbin.org/basic-auth/user/password")
             .validate()
-            .responseJSON { jsonResponse in
+            .response { jsonResponse in
                 response = jsonResponse
                 expectation.fulfill()
             }
@@ -574,7 +574,7 @@ class SessionManagerTestCase: BaseTestCase {
         // Then
         XCTAssertEqual(handler.adaptedCount, 2)
         XCTAssertEqual(handler.retryCount, 2)
-        XCTAssertEqual(response?.result.isSuccess, false)
+        XCTAssertNotNil(response?.data)
     }
 
     func testThatSessionManagerCallsAdapterWhenRequestIsRetried() {
@@ -587,13 +587,13 @@ class SessionManagerTestCase: BaseTestCase {
         sessionManager.retrier = handler
 
         let expectation = self.expectation(description: "request should eventually fail")
-        var response: DataResponse<Any>?
+        var response: DefaultDataResponse?
 
         // When
         sessionManager.request("https://httpbin.org/basic-auth/user/password")
             .validate()
-            .responseJSON { jsonResponse in
-                response = jsonResponse
+            .response { returnedResponse in
+                response = returnedResponse
                 expectation.fulfill()
             }
 
@@ -602,7 +602,7 @@ class SessionManagerTestCase: BaseTestCase {
         // Then
         XCTAssertEqual(handler.adaptedCount, 2)
         XCTAssertEqual(handler.retryCount, 1)
-        XCTAssertEqual(response?.result.isSuccess, true)
+        XCTAssertNotNil(response?.data)
     }
 
     func testThatRequestAdapterErrorThrowsResponseHandlerErrorWhenRequestIsRetried() {
@@ -615,13 +615,13 @@ class SessionManagerTestCase: BaseTestCase {
         sessionManager.retrier = handler
 
         let expectation = self.expectation(description: "request should eventually fail")
-        var response: DataResponse<Any>?
+        var response: DefaultDataResponse?
 
         // When
         sessionManager.request("https://httpbin.org/basic-auth/user/password")
             .validate()
-            .responseJSON { jsonResponse in
-                response = jsonResponse
+            .response { defaultResponse in
+                response = defaultResponse
                 expectation.fulfill()
             }
 
@@ -630,9 +630,9 @@ class SessionManagerTestCase: BaseTestCase {
         // Then
         XCTAssertEqual(handler.adaptedCount, 1)
         XCTAssertEqual(handler.retryCount, 1)
-        XCTAssertEqual(response?.result.isSuccess, false)
+        XCTAssertNotNil(response?.data)
 
-        if let error = response?.result.error as? AFError {
+        if let error = response?.error as? AFError {
             XCTAssertTrue(error.isInvalidURLError)
             XCTAssertEqual(error.urlConvertible as? String, "")
         } else {
@@ -692,11 +692,11 @@ class SessionManagerConfigurationHeadersTestCase: BaseTestCase {
 
         let expectation = self.expectation(description: "request should complete successfully")
 
-        var response: DataResponse<Any>?
+        var response: DefaultDataResponse?
 
         // When
         manager.request("https://httpbin.org/headers")
-            .responseJSON { closureResponse in
+            .response { closureResponse in
                 response = closureResponse
                 expectation.fulfill()
             }
@@ -708,12 +708,13 @@ class SessionManagerConfigurationHeadersTestCase: BaseTestCase {
             XCTAssertNotNil(response.request, "request should not be nil")
             XCTAssertNotNil(response.response, "response should not be nil")
             XCTAssertNotNil(response.data, "data should not be nil")
-            XCTAssertTrue(response.result.isSuccess, "result should be a success")
+
+            let json = try! JSONSerialization.jsonObject(with: response.data!, options: [])
 
             // The `as NSString` cast is necessary due to a compiler bug. See the following rdar for more info.
             // - https://openradar.appspot.com/radar?id=5517037090635776
             if
-                let headers = (response.result.value as AnyObject?)?["headers" as NSString] as? [String: String],
+                let headers = (json as AnyObject?)?["headers" as NSString] as? [String: String],
                 let authorization = headers["Authorization"]
             {
                 XCTAssertEqual(authorization, "Bearer 123456", "authorization header value does not match")

@@ -110,14 +110,12 @@ public enum AFError: Error {
     /// - inputFileNil:                    The file containing the server response did not exist.
     /// - inputFileReadFailed:             The file containing the server response could not be read.
     /// - stringSerializationFailed:       String serialization failed using the provided `String.Encoding`.
-    /// - jsonSerializationFailed:         JSON serialization failed with an underlying system error.
     public enum ResponseSerializationFailureReason {
         case inputDataNil
         case inputDataNilOrZeroLength
         case inputFileNil
         case inputFileReadFailed(at: URL)
         case stringSerializationFailed(encoding: String.Encoding)
-        case jsonSerializationFailed(error: Error)
     }
 
     case invalidURL(url: URLConvertible)
@@ -195,8 +193,6 @@ extension AFError {
         case .parameterEncodingFailed(let reason):
             return reason.underlyingError
         case .multipartEncodingFailed(let reason):
-            return reason.underlyingError
-        case .responseSerializationFailed(let reason):
             return reason.underlyingError
         default:
             return nil
@@ -318,15 +314,6 @@ extension AFError.ResponseSerializationFailureReason {
             return nil
         }
     }
-
-    var underlyingError: Error? {
-        switch self {
-        case .jsonSerializationFailed(let error):
-            return error
-        default:
-            return nil
-        }
-    }
 }
 
 // MARK: - Error Descriptions
@@ -411,8 +398,6 @@ extension AFError.ResponseSerializationFailureReason {
             return "Response could not be serialized, input file could not be read: \(url)."
         case .stringSerializationFailed(let encoding):
             return "String could not be serialized with encoding: \(encoding)."
-        case .jsonSerializationFailed(let error):
-            return "JSON could not be serialized because of error:\n\(error.localizedDescription)"
         }
     }
 }
