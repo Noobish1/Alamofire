@@ -38,11 +38,6 @@ extension AFError {
         return false
     }
 
-    var isPropertyListEncodingFailed: Bool {
-        if case let .parameterEncodingFailed(reason) = self, reason.isPropertyListEncodingFailed { return true }
-        return false
-    }
-
     // MultipartEncodingFailureReason
 
     var isBodyPartURLInvalid: Bool {
@@ -185,11 +180,6 @@ extension AFError.ParameterEncodingFailureReason {
 
     var isJSONEncodingFailed: Bool {
         if case .jsonEncodingFailed = self { return true }
-        return false
-    }
-
-    var isPropertyListEncodingFailed: Bool {
-        if case .propertyListEncodingFailed = self { return true }
         return false
     }
 }
