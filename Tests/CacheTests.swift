@@ -280,9 +280,9 @@ class CacheTestCase: BaseTestCase {
         XCTAssertNotNil(noCacheResponse, "\(CacheControl.noCache) response should not be nil")
 
         if isCachedResponseForNoStoreHeaderExpected() {
-            XCTAssertNotNil(noStoreResponse, "\(CacheControl.NoStore) response should not be nil")
+            XCTAssertNotNil(noStoreResponse, "\(CacheControl.noStore) response should not be nil")
         } else {
-            XCTAssertNil(noStoreResponse, "\(CacheControl.NoStore) response should be nil")
+            XCTAssertNil(noStoreResponse, "\(CacheControl.noStore) response should be nil")
         }
     }
 
@@ -318,9 +318,9 @@ class CacheTestCase: BaseTestCase {
         executeTest(cachePolicy: cachePolicy, cacheControl: CacheControl.noCache, shouldReturnCachedResponse: true)
 
         if isCachedResponseForNoStoreHeaderExpected() {
-            executeTest(cachePolicy: cachePolicy, cacheControl: CacheControl.NoStore, shouldReturnCachedResponse: true)
+            executeTest(cachePolicy: cachePolicy, cacheControl: CacheControl.noStore, shouldReturnCachedResponse: true)
         } else {
-            executeTest(cachePolicy: cachePolicy, cacheControl: CacheControl.NoStore, shouldReturnCachedResponse: false)
+            executeTest(cachePolicy: cachePolicy, cacheControl: CacheControl.noStore, shouldReturnCachedResponse: false)
         }
     }
 
@@ -334,14 +334,14 @@ class CacheTestCase: BaseTestCase {
         executeTest(cachePolicy: cachePolicy, cacheControl: CacheControl.noCache, shouldReturnCachedResponse: true)
 
         if isCachedResponseForNoStoreHeaderExpected() {
-            executeTest(cachePolicy: cachePolicy, cacheControl: CacheControl.NoStore, shouldReturnCachedResponse: true)
+            executeTest(cachePolicy: cachePolicy, cacheControl: CacheControl.noStore, shouldReturnCachedResponse: true)
         } else {
             // Given
             let expectation = self.expectation(description: "GET request to httpbin")
             var response: HTTPURLResponse?
 
             // When
-            startRequest(cacheControl: CacheControl.NoStore, cachePolicy: cachePolicy) { _, responseResponse in
+            startRequest(cacheControl: CacheControl.noStore, cachePolicy: cachePolicy) { _, responseResponse in
                 response = responseResponse
                 expectation.fulfill()
             }

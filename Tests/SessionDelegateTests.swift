@@ -44,24 +44,22 @@ class SessionDelegateTestCase: BaseTestCase {
             let expectation = self.expectation(description: "Override closure should be called")
 
             var overrideClosureCalled = false
-            var response: HTTPURLResponse?
+            var invalidationError: Error?
 
-            manager.delegate.sessionDidReceiveChallenge = { session, challenge in
+            manager.delegate.sessionDidBecomeInvalidWithError = { _, error in
                 overrideClosureCalled = true
-                return (.performDefaultHandling, nil)
-            }
+                invalidationError = error
 
-            // When
-            manager.request(.GET, "https://httpbin.org/get").responseJSON { closureResponse in
-                response = closureResponse.response
                 expectation.fulfill()
             }
 
+            // When
+            manager.session.invalidateAndCancel()
             waitForExpectations(timeout: timeout, handler: nil)
 
             // Then
             XCTAssertTrue(overrideClosureCalled)
-            XCTAssertEqual(response?.statusCode, 200)
+            XCTAssertNil(invalidationError)
         } else {
             // This test MUST be disabled on iOS 8.x because `respondsToSelector` is not being called for the
             // `URLSession:didReceiveChallenge:completionHandler:` selector when more than one test here is run
@@ -80,13 +78,13 @@ class SessionDelegateTestCase: BaseTestCase {
             var overrideClosureCalled = false
             var response: HTTPURLResponse?
 
-            manager.delegate.sessionDidReceiveChallengeWithCompletion = { session, challenge, completion in
+            manager.delegate.sessionDidReceiveChallenge = { session, challenge in
                 overrideClosureCalled = true
-                completion(.performDefaultHandling, nil)
+                return (.performDefaultHandling, nil)
             }
 
             // When
-            manager.request(.GET, "https://httpbin.org/get").responseJSON { closureResponse in
+            manager.request("https://httpbin.org/get").responseJSON { closureResponse in
                 response = closureResponse.response
                 expectation.fulfill()
             }

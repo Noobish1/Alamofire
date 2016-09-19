@@ -166,7 +166,7 @@ class URLProtocolTestCase: BaseTestCase {
             XCTAssertEqual(headers["request-header"] as? String, "foobar")
 
             if #available(iOS 9.0, *) {
-                XCTAssertEqual(headers["session-configuration-header"], "foo")
+                XCTAssertEqual(headers["session-configuration-header"] as? String, "foo")
             } else {
                 XCTAssertNil(headers["session-configuration-header"])
             }
