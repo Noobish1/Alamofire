@@ -24,7 +24,7 @@
 
 import Foundation
 
-/// Used to store all data associated with an non-serialized response of a data or upload request.
+/// Used to store all data associated with an non-serialized response of a data request.
 public struct DefaultDataResponse {
     /// The URL request sent to the server.
     public let request: URLRequest?
@@ -50,7 +50,7 @@ public struct DefaultDataResponse {
 
 // MARK: -
 
-/// Used to store all data associated with a serialized response of a data or upload request.
+/// Used to store all data associated with a serialized response of a data request.
 public struct DataResponse<Value> {
     /// The URL request sent to the server.
     public let request: URLRequest?

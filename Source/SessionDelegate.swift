@@ -330,14 +330,6 @@ extension SessionDelegate: URLSessionTaskDelegate {
     {
         if let taskDidSendBodyData = taskDidSendBodyData {
             taskDidSendBodyData(session, task, bytesSent, totalBytesSent, totalBytesExpectedToSend)
-        } else if let delegate = self[task]?.delegate as? UploadTaskDelegate {
-            delegate.URLSession(
-                session,
-                task: task,
-                didSendBodyData: bytesSent,
-                totalBytesSent: totalBytesSent,
-                totalBytesExpectedToSend: totalBytesExpectedToSend
-            )
         }
     }
 
@@ -482,10 +474,10 @@ extension SessionDelegate: URLSessionDataDelegate {
         }
     }
 
-    /// Asks the delegate whether the data (or upload) task should store the response in the cache.
+    /// Asks the delegate whether the data task should store the response in the cache.
     ///
-    /// - parameter session:           The session containing the data (or upload) task.
-    /// - parameter dataTask:          The data (or upload) task.
+    /// - parameter session:           The session containing the data task.
+    /// - parameter dataTask:          The data task.
     /// - parameter proposedResponse:  The default caching behavior. This behavior is determined based on the current
     ///                                caching policy and the values of certain received headers, such as the Pragma
     ///                                and Cache-Control headers.
