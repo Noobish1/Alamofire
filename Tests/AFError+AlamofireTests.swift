@@ -137,11 +137,6 @@ extension AFError {
         return false
     }
 
-    var isPropertyListSerializationFailed: Bool {
-        if case let .responseSerializationFailed(reason) = self, reason.isPropertyListSerializationFailed { return true }
-        return false
-    }
-
     // ResponseValidationFailureReason
 
     var isDataFileNil: Bool {
@@ -283,11 +278,6 @@ extension AFError.ResponseSerializationFailureReason {
 
     var isJSONSerializationFailed: Bool {
         if case .jsonSerializationFailed = self { return true }
-        return false
-    }
-
-    var isPropertyListSerializationFailed: Bool {
-        if case .propertyListSerializationFailed = self { return true }
         return false
     }
 }

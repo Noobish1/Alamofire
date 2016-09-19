@@ -111,7 +111,6 @@ public enum AFError: Error {
     /// - inputFileReadFailed:             The file containing the server response could not be read.
     /// - stringSerializationFailed:       String serialization failed using the provided `String.Encoding`.
     /// - jsonSerializationFailed:         JSON serialization failed with an underlying system error.
-    /// - propertyListSerializationFailed: Property list serialization failed with an underlying system error.
     public enum ResponseSerializationFailureReason {
         case inputDataNil
         case inputDataNilOrZeroLength
@@ -119,7 +118,6 @@ public enum AFError: Error {
         case inputFileReadFailed(at: URL)
         case stringSerializationFailed(encoding: String.Encoding)
         case jsonSerializationFailed(error: Error)
-        case propertyListSerializationFailed(error: Error)
     }
 
     case invalidURL(url: URLConvertible)
@@ -323,7 +321,7 @@ extension AFError.ResponseSerializationFailureReason {
 
     var underlyingError: Error? {
         switch self {
-        case .jsonSerializationFailed(let error), .propertyListSerializationFailed(let error):
+        case .jsonSerializationFailed(let error):
             return error
         default:
             return nil
@@ -415,8 +413,6 @@ extension AFError.ResponseSerializationFailureReason {
             return "String could not be serialized with encoding: \(encoding)."
         case .jsonSerializationFailed(let error):
             return "JSON could not be serialized because of error:\n\(error.localizedDescription)"
-        case .propertyListSerializationFailed(let error):
-            return "PropertyList could not be serialized because of error:\n\(error.localizedDescription)"
         }
     }
 }
