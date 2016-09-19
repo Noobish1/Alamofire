@@ -109,13 +109,11 @@ public enum AFError: Error {
     /// - inputDataNilOrZeroLength:        The server response contained no data or the data was zero length.
     /// - inputFileNil:                    The file containing the server response did not exist.
     /// - inputFileReadFailed:             The file containing the server response could not be read.
-    /// - stringSerializationFailed:       String serialization failed using the provided `String.Encoding`.
     public enum ResponseSerializationFailureReason {
         case inputDataNil
         case inputDataNilOrZeroLength
         case inputFileNil
         case inputFileReadFailed(at: URL)
-        case stringSerializationFailed(encoding: String.Encoding)
     }
 
     case invalidURL(url: URLConvertible)
@@ -228,16 +226,6 @@ extension AFError {
             return nil
         }
     }
-
-    /// The `String.Encoding` associated with a failed `.stringResponse()` call.
-    public var failedStringEncoding: String.Encoding? {
-        switch self {
-        case .responseSerializationFailed(let reason):
-            return reason.failedStringEncoding
-        default:
-            return nil
-        }
-    }
 }
 
 extension AFError.ParameterEncodingFailureReason {
@@ -299,17 +287,6 @@ extension AFError.ResponseValidationFailureReason {
         switch self {
         case .unacceptableStatusCode(let code):
             return code
-        default:
-            return nil
-        }
-    }
-}
-
-extension AFError.ResponseSerializationFailureReason {
-    var failedStringEncoding: String.Encoding? {
-        switch self {
-        case .stringSerializationFailed(let encoding):
-            return encoding
         default:
             return nil
         }
@@ -396,8 +373,6 @@ extension AFError.ResponseSerializationFailureReason {
             return "Response could not be serialized, input file was nil."
         case .inputFileReadFailed(let url):
             return "Response could not be serialized, input file could not be read: \(url)."
-        case .stringSerializationFailed(let encoding):
-            return "String could not be serialized with encoding: \(encoding)."
         }
     }
 }
