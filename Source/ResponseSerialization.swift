@@ -53,37 +53,6 @@ public struct DataResponseSerializer<Value>: DataResponseSerializerProtocol {
     }
 }
 
-// MARK: -
-
-/// The type in which all download response serializers must conform to in order to serialize a response.
-public protocol DownloadResponseSerializerProtocol {
-    /// The type of serialized object to be created by this `DownloadResponseSerializerType`.
-    associatedtype SerializedObject
-
-    /// A closure used by response handlers that takes a request, response, url and error and returns a result.
-    var serializeResponse: (URLRequest?, HTTPURLResponse?, URL?, Error?) -> Result<SerializedObject> { get }
-}
-
-// MARK: -
-
-/// A generic `DownloadResponseSerializerType` used to serialize a request, response, and data into a serialized object.
-public struct DownloadResponseSerializer<Value>: DownloadResponseSerializerProtocol {
-    /// The type of serialized object to be created by this `DownloadResponseSerializer`.
-    public typealias SerializedObject = Value
-
-    /// A closure used by response handlers that takes a request, response, url and error and returns a result.
-    public var serializeResponse: (URLRequest?, HTTPURLResponse?, URL?, Error?) -> Result<Value>
-
-    /// Initializes the `ResponseSerializer` instance with the given serialize response closure.
-    ///
-    /// - parameter serializeResponse: The closure used to serialize the response.
-    ///
-    /// - returns: The new generic response serializer instance.
-    public init(serializeResponse: @escaping (URLRequest?, HTTPURLResponse?, URL?, Error?) -> Result<Value>) {
-        self.serializeResponse = serializeResponse
-    }
-}
-
 // MARK: - Default
 
 extension DataRequest {
@@ -163,91 +132,6 @@ extension DataRequest {
     }
 }
 
-extension DownloadRequest {
-    /// Adds a handler to be called once the request has finished.
-    ///
-    /// - parameter queue:             The queue on which the completion handler is dispatched.
-    /// - parameter completionHandler: The code to be executed once the request has finished.
-    ///
-    /// - returns: The request.
-    @discardableResult
-    public func response(
-        queue: DispatchQueue? = nil,
-        completionHandler: @escaping (DefaultDownloadResponse) -> Void)
-        -> Self
-    {
-        delegate.queue.addOperation {
-            (queue ?? DispatchQueue.main).async {
-                var downloadResponse = DefaultDownloadResponse(
-                    request: self.request,
-                    response: self.response,
-                    temporaryURL: self.downloadDelegate.temporaryURL,
-                    destinationURL: self.downloadDelegate.destinationURL,
-                    resumeData: self.downloadDelegate.resumeData,
-                    error: self.downloadDelegate.error
-                )
-
-                downloadResponse.add(self.delegate.metrics)
-
-                completionHandler(downloadResponse)
-            }
-        }
-
-        return self
-    }
-
-    /// Adds a handler to be called once the request has finished.
-    ///
-    /// - parameter queue:              The queue on which the completion handler is dispatched.
-    /// - parameter responseSerializer: The response serializer responsible for serializing the request, response,
-    ///                                 and data contained in the destination url.
-    /// - parameter completionHandler:  The code to be executed once the request has finished.
-    ///
-    /// - returns: The request.
-    @discardableResult
-    public func response<T: DownloadResponseSerializerProtocol>(
-        queue: DispatchQueue? = nil,
-        responseSerializer: T,
-        completionHandler: @escaping (DownloadResponse<T.SerializedObject>) -> Void)
-        -> Self
-    {
-        delegate.queue.addOperation {
-            let result = responseSerializer.serializeResponse(
-                self.request,
-                self.response,
-                self.downloadDelegate.fileURL,
-                self.downloadDelegate.error
-            )
-
-            let requestCompletedTime = self.endTime ?? CFAbsoluteTimeGetCurrent()
-            let initialResponseTime = self.delegate.initialResponseTime ?? requestCompletedTime
-
-            let timeline = Timeline(
-                requestStartTime: self.startTime ?? CFAbsoluteTimeGetCurrent(),
-                initialResponseTime: initialResponseTime,
-                requestCompletedTime: requestCompletedTime,
-                serializationCompletedTime: CFAbsoluteTimeGetCurrent()
-            )
-
-            var downloadResponse = DownloadResponse<T.SerializedObject>(
-                request: self.request,
-                response: self.response,
-                temporaryURL: self.downloadDelegate.temporaryURL,
-                destinationURL: self.downloadDelegate.destinationURL,
-                resumeData: self.downloadDelegate.resumeData,
-                result: result,
-                timeline: timeline
-            )
-
-            downloadResponse.add(self.delegate.metrics)
-
-            (queue ?? DispatchQueue.main).async { completionHandler(downloadResponse) }
-        }
-
-        return self
-    }
-}
-
 // MARK: - Data
 
 extension Request {
@@ -295,46 +179,6 @@ extension DataRequest {
         return response(
             queue: queue,
             responseSerializer: DataRequest.dataResponseSerializer(),
-            completionHandler: completionHandler
-        )
-    }
-}
-
-extension DownloadRequest {
-    /// Creates a response serializer that returns the associated data as-is.
-    ///
-    /// - returns: A data response serializer.
-    public static func dataResponseSerializer() -> DownloadResponseSerializer<Data> {
-        return DownloadResponseSerializer { _, response, fileURL, error in
-            guard error == nil else { return .failure(error!) }
-
-            guard let fileURL = fileURL else {
-                return .failure(AFError.responseSerializationFailed(reason: .inputFileNil))
-            }
-
-            do {
-                let data = try Data(contentsOf: fileURL)
-                return Request.serializeResponseData(response: response, data: data, error: error)
-            } catch {
-                return .failure(AFError.responseSerializationFailed(reason: .inputFileReadFailed(at: fileURL)))
-            }
-        }
-    }
-
-    /// Adds a handler to be called once the request has finished.
-    ///
-    /// - parameter completionHandler: The code to be executed once the request has finished.
-    ///
-    /// - returns: The request.
-    @discardableResult
-    public func responseData(
-        queue: DispatchQueue? = nil,
-        completionHandler: @escaping (DownloadResponse<Data>) -> Void)
-        -> Self
-    {
-        return response(
-            queue: queue,
-            responseSerializer: DownloadRequest.dataResponseSerializer(),
             completionHandler: completionHandler
         )
     }

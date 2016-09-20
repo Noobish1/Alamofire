@@ -456,8 +456,6 @@ extension SessionDelegate: URLSessionDataDelegate {
     {
         if let dataTaskDidBecomeDownloadTask = dataTaskDidBecomeDownloadTask {
             dataTaskDidBecomeDownloadTask(session, dataTask, downloadTask)
-        } else {
-            self[downloadTask]?.delegate = DownloadTaskDelegate(task: downloadTask)
         }
     }
 
@@ -528,8 +526,6 @@ extension SessionDelegate: URLSessionDownloadDelegate {
     {
         if let downloadTaskDidFinishDownloadingToURL = downloadTaskDidFinishDownloadingToURL {
             downloadTaskDidFinishDownloadingToURL(session, downloadTask, location)
-        } else if let delegate = self[downloadTask]?.delegate as? DownloadTaskDelegate {
-            delegate.urlSession(session, downloadTask: downloadTask, didFinishDownloadingTo: location)
         }
     }
 
@@ -552,14 +548,6 @@ extension SessionDelegate: URLSessionDownloadDelegate {
     {
         if let downloadTaskDidWriteData = downloadTaskDidWriteData {
             downloadTaskDidWriteData(session, downloadTask, bytesWritten, totalBytesWritten, totalBytesExpectedToWrite)
-        } else if let delegate = self[downloadTask]?.delegate as? DownloadTaskDelegate {
-            delegate.urlSession(
-                session,
-                downloadTask: downloadTask,
-                didWriteData: bytesWritten,
-                totalBytesWritten: totalBytesWritten,
-                totalBytesExpectedToWrite: totalBytesExpectedToWrite
-            )
         }
     }
 
@@ -581,13 +569,6 @@ extension SessionDelegate: URLSessionDownloadDelegate {
     {
         if let downloadTaskDidResumeAtOffset = downloadTaskDidResumeAtOffset {
             downloadTaskDidResumeAtOffset(session, downloadTask, fileOffset, expectedTotalBytes)
-        } else if let delegate = self[downloadTask]?.delegate as? DownloadTaskDelegate {
-            delegate.urlSession(
-                session,
-                downloadTask: downloadTask,
-                didResumeAtOffset: fileOffset,
-                expectedTotalBytes: expectedTotalBytes
-            )
         }
     }
 }

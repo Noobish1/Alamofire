@@ -327,37 +327,6 @@ class SessionManagerTestCase: BaseTestCase {
         }
     }
 
-    func testThatDownloadRequestWithInvalidURLStringThrowsResponseHandlerError() {
-        // Given
-        let sessionManager = SessionManager()
-        let expectation = self.expectation(description: "Download should fail with error")
-
-        var response: DefaultDownloadResponse?
-
-        // When
-        sessionManager.download("https://httpbin.org/get/äëïöü").response { resp in
-            response = resp
-            expectation.fulfill()
-        }
-
-        waitForExpectations(timeout: timeout, handler: nil)
-
-        // Then
-        XCTAssertNil(response?.request)
-        XCTAssertNil(response?.response)
-        XCTAssertNil(response?.temporaryURL)
-        XCTAssertNil(response?.destinationURL)
-        XCTAssertNil(response?.resumeData)
-        XCTAssertNotNil(response?.error)
-
-        if let error = response?.error as? AFError {
-            XCTAssertTrue(error.isInvalidURLError)
-            XCTAssertEqual(error.urlConvertible as? String, "https://httpbin.org/get/äëïöü")
-        } else {
-            XCTFail("error should not be nil")
-        }
-    }
-
     // MARK: Tests - Request Adapter
 
     func testThatSessionManagerCallsRequestAdapterWhenCreatingDataRequest() {
@@ -370,22 +339,6 @@ class SessionManagerTestCase: BaseTestCase {
 
         // When
         let request = sessionManager.request("https://httpbin.org/get")
-
-        // Then
-        XCTAssertEqual(request.task?.originalRequest?.httpMethod, adapter.method.rawValue)
-    }
-
-    func testThatSessionManagerCallsRequestAdapterWhenCreatingDownloadRequest() {
-        // Given
-        let adapter = HTTPMethodAdapter(method: .post)
-
-        let sessionManager = SessionManager()
-        sessionManager.adapter = adapter
-        sessionManager.startRequestsImmediately = false
-
-        // When
-        let destination = DownloadRequest.suggestedDownloadDestination()
-        let request = sessionManager.download("https://httpbin.org/get", to: destination)
 
         // Then
         XCTAssertEqual(request.task?.originalRequest?.httpMethod, adapter.method.rawValue)
