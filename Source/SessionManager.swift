@@ -102,9 +102,6 @@ open class SessionManager {
         ]
     }()
 
-    /// Default memory threshold used when encoding `MultipartFormData` in bytes.
-    open static let multipartFormDataEncodingMemoryThreshold: UInt64 = 10_000_000
-
     /// The underlying session.
     open let session: URLSession
 

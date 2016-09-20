@@ -29,7 +29,6 @@ import Foundation
 ///
 /// - invalidURL:                  Returned when a `URLConvertible` type fails to create a valid `URL`.
 /// - parameterEncodingFailed:     Returned when a parameter encoding object throws an error during the encoding process.
-/// - multipartEncodingFailed:     Returned when some step in the multipart encoding process fails.
 /// - responseValidationFailed:    Returned when a `validate()` call fails.
 /// - responseSerializationFailed: Returned when a response serializer encounters an error in the serialization process.
 public enum AFError: Error {
@@ -124,7 +123,7 @@ extension AFError {
     }
 
     /// The `Error` returned by a system framework associated with a `.parameterEncodingFailed`,
-    /// `.multipartEncodingFailed` or `.responseSerializationFailed` error.
+    /// or `.responseSerializationFailed` error.
     public var underlyingError: Error? {
         switch self {
         case .parameterEncodingFailed(let reason):
