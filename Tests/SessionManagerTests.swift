@@ -380,8 +380,8 @@ class SessionManagerTestCase: BaseTestCase {
         // When
         sessionManager.request("https://httpbin.org/basic-auth/user/password")
             .validate()
-            .response { jsonResponse in
-                response = jsonResponse
+            .response { closureResponse in
+                response = closureResponse
                 expectation.fulfill()
             }
 
