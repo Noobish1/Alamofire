@@ -43,49 +43,6 @@ public enum AFError: Error {
         case jsonEncodingFailed(error: Error)
     }
 
-    /// The underlying reason the multipart encoding error occurred.
-    ///
-    /// - bodyPartURLInvalid:                   The `fileURL` provided for reading an encodable body part isn't a
-    ///                                         file URL.
-    /// - bodyPartFilenameInvalid:              The filename of the `fileURL` provided has either an empty
-    ///                                         `lastPathComponent` or `pathExtension.
-    /// - bodyPartFileNotReachable:             The file at the `fileURL` provided was not reachable.
-    /// - bodyPartFileNotReachableWithError:    Attempting to check the reachability of the `fileURL` provided threw
-    ///                                         an error.
-    /// - bodyPartFileIsDirectory:              The file at the `fileURL` provided is actually a directory.
-    /// - bodyPartFileSizeNotAvailable:         The size of the file at the `fileURL` provided was not returned by
-    ///                                         the system.
-    /// - bodyPartFileSizeQueryFailedWithError: The attempt to find the size of the file at the `fileURL` provided
-    ///                                         threw an error.
-    /// - bodyPartInputStreamCreationFailed:    An `InputStream` could not be created for the provided `fileURL`.
-    /// - outputStreamCreationFailed:           An `OutputStream` could not be created when attempting to write the
-    ///                                         encoded data to disk.
-    /// - outputStreamFileAlreadyExists:        The encoded body data could not be writtent disk because a file
-    ///                                         already exists at the provided `fileURL`.
-    /// - outputStreamURLInvalid:               The `fileURL` provided for writing the encoded body data to disk is
-    ///                                         not a file URL.
-    /// - outputStreamWriteFailed:              The attempt to write the encoded body data to disk failed with an
-    ///                                         underlying error.
-    /// - inputStreamReadFailed:                The attempt to read an encoded body part `InputStream` failed with
-    ///                                         underlying system error.
-    public enum MultipartEncodingFailureReason {
-        case bodyPartURLInvalid(url: URL)
-        case bodyPartFilenameInvalid(in: URL)
-        case bodyPartFileNotReachable(at: URL)
-        case bodyPartFileNotReachableWithError(atURL: URL, error: Error)
-        case bodyPartFileIsDirectory(at: URL)
-        case bodyPartFileSizeNotAvailable(at: URL)
-        case bodyPartFileSizeQueryFailedWithError(forURL: URL, error: Error)
-        case bodyPartInputStreamCreationFailed(for: URL)
-
-        case outputStreamCreationFailed(for: URL)
-        case outputStreamFileAlreadyExists(at: URL)
-        case outputStreamURLInvalid(url: URL)
-        case outputStreamWriteFailed(error: Error)
-
-        case inputStreamReadFailed(error: Error)
-    }
-
     /// The underlying reason the response validation error occurred.
     ///
     /// - dataFileNil:             The data file containing the server response did not exist.
@@ -118,7 +75,6 @@ public enum AFError: Error {
 
     case invalidURL(url: URLConvertible)
     case parameterEncodingFailed(reason: ParameterEncodingFailureReason)
-    case multipartEncodingFailed(reason: MultipartEncodingFailureReason)
     case responseValidationFailed(reason: ResponseValidationFailureReason)
     case responseSerializationFailed(reason: ResponseSerializationFailureReason)
 }
@@ -135,14 +91,7 @@ extension AFError {
     /// Returns whether the AFError is a parameter encoding error. When `true`, the `underlyingError` property will
     /// contain the associated value.
     public var isParameterEncodingError: Bool {
-        if case .multipartEncodingFailed = self { return true }
-        return false
-    }
-
-    /// Returns whether the AFError is a multipart encoding error. When `true`, the `url` and `underlyingError` properties
-    /// will contain the associated values.
-    public var isMultipartEncodingError: Bool {
-        if case .multipartEncodingFailed = self { return true }
+        if case .parameterEncodingFailed = self { return true }
         return false
     }
 
@@ -174,23 +123,11 @@ extension AFError {
         }
     }
 
-    /// The `URL` associated with the error.
-    public var url: URL? {
-        switch self {
-        case .multipartEncodingFailed(let reason):
-            return reason.url
-        default:
-            return nil
-        }
-    }
-
     /// The `Error` returned by a system framework associated with a `.parameterEncodingFailed`,
     /// `.multipartEncodingFailed` or `.responseSerializationFailed` error.
     public var underlyingError: Error? {
         switch self {
         case .parameterEncodingFailed(let reason):
-            return reason.underlyingError
-        case .multipartEncodingFailed(let reason):
             return reason.underlyingError
         default:
             return nil
@@ -239,31 +176,6 @@ extension AFError.ParameterEncodingFailureReason {
     }
 }
 
-extension AFError.MultipartEncodingFailureReason {
-    var url: URL? {
-        switch self {
-        case .bodyPartURLInvalid(let url), .bodyPartFilenameInvalid(let url), .bodyPartFileNotReachable(let url),
-             .bodyPartFileIsDirectory(let url), .bodyPartFileSizeNotAvailable(let url),
-             .bodyPartInputStreamCreationFailed(let url), .outputStreamCreationFailed(let url),
-             .outputStreamFileAlreadyExists(let url), .outputStreamURLInvalid(let url),
-             .bodyPartFileNotReachableWithError(let url, _), .bodyPartFileSizeQueryFailedWithError(let url, _):
-            return url
-        default:
-            return nil
-        }
-    }
-
-    var underlyingError: Error? {
-        switch self {
-        case .bodyPartFileNotReachableWithError(_, let error), .bodyPartFileSizeQueryFailedWithError(_, let error),
-             .outputStreamWriteFailed(let error), .inputStreamReadFailed(let error):
-            return error
-        default:
-            return nil
-        }
-    }
-}
-
 extension AFError.ResponseValidationFailureReason {
     var acceptableContentTypes: [String]? {
         switch self {
@@ -302,8 +214,6 @@ extension AFError: LocalizedError {
             return "URL is not valid: \(url)"
         case .parameterEncodingFailed(let reason):
             return reason.localizedDescription
-        case .multipartEncodingFailed(let reason):
-            return reason.localizedDescription
         case .responseValidationFailed(let reason):
             return reason.localizedDescription
         case .responseSerializationFailed(let reason):
@@ -319,45 +229,6 @@ extension AFError.ParameterEncodingFailureReason {
             return "URL request to encode was missing a URL"
         case .jsonEncodingFailed(let error):
             return "JSON could not be encoded because of error:\n\(error.localizedDescription)"
-        }
-    }
-}
-
-extension AFError.MultipartEncodingFailureReason {
-    var localizedDescription: String {
-        switch self {
-        case .bodyPartURLInvalid(let url):
-            return "The URL provided is not a file URL: \(url)"
-        case .bodyPartFilenameInvalid(let url):
-            return "The URL provided does not have a valid filename: \(url)"
-        case .bodyPartFileNotReachable(let url):
-            return "The URL provided is not reachable: \(url)"
-        case .bodyPartFileNotReachableWithError(let url, let error):
-            return (
-                "The system returned an error while checking the provided URL for " +
-                "reachability.\nURL: \(url)\nError: \(error)"
-            )
-        case .bodyPartFileIsDirectory(let url):
-            return "The URL provided is a directory: \(url)"
-        case .bodyPartFileSizeNotAvailable(let url):
-            return "Could not fetch the file size from the provided URL: \(url)"
-        case .bodyPartFileSizeQueryFailedWithError(let url, let error):
-            return (
-                "The system returned an error while attempting to fetch the file size from the " +
-                "provided URL.\nURL: \(url)\nError: \(error)"
-            )
-        case .bodyPartInputStreamCreationFailed(let url):
-            return "Failed to create an InputStream for the provided URL: \(url)"
-        case .outputStreamCreationFailed(let url):
-            return "Failed to create an OutputStream for URL: \(url)"
-        case .outputStreamFileAlreadyExists(let url):
-            return "A file already exists at the provided URL: \(url)"
-        case .outputStreamURLInvalid(let url):
-            return "The provided OutputStream URL is invalid: \(url)"
-        case .outputStreamWriteFailed(let error):
-            return "OutputStream write failed with error: \(error)"
-        case .inputStreamReadFailed(let error):
-            return "InputStream read failed with error: \(error)"
         }
     }
 }
