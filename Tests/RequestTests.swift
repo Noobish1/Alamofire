@@ -111,65 +111,6 @@ class RequestSubclassRequestPropertyTestCase: BaseTestCase {
         XCTAssertEqual(request.request?.url?.absoluteString, urlString)
         XCTAssertNil(request.response)
     }
-
-    func testDownloadRequestHasURLRequest() {
-        // Given
-        let urlString = "https://httpbin.org/"
-
-        // When
-        let request = sessionManager.download(urlString)
-
-        // Then
-        XCTAssertNotNil(request.request)
-        XCTAssertEqual(request.request?.httpMethod, "GET")
-        XCTAssertEqual(request.request?.url?.absoluteString, urlString)
-        XCTAssertNil(request.response)
-    }
-
-    func testUploadDataRequestHasURLRequest() {
-        // Given
-        let urlString = "https://httpbin.org/"
-
-        // When
-        let request = sessionManager.upload(Data(), to: urlString)
-
-        // Then
-        XCTAssertNotNil(request.request)
-        XCTAssertEqual(request.request?.httpMethod, "POST")
-        XCTAssertEqual(request.request?.url?.absoluteString, urlString)
-        XCTAssertNil(request.response)
-    }
-
-    func testUploadFileRequestHasURLRequest() {
-        // Given
-        let urlString = "https://httpbin.org/"
-        let imageURL = url(forResource: "rainbow", withExtension: "jpg")
-
-        // When
-        let request = sessionManager.upload(imageURL, to: urlString)
-
-        // Then
-        XCTAssertNotNil(request.request)
-        XCTAssertEqual(request.request?.httpMethod, "POST")
-        XCTAssertEqual(request.request?.url?.absoluteString, urlString)
-        XCTAssertNil(request.response)
-    }
-
-    func testUploadStreamRequestHasURLRequest() {
-        // Given
-        let urlString = "https://httpbin.org/"
-        let imageURL = url(forResource: "rainbow", withExtension: "jpg")
-        let imageStream = InputStream(url: imageURL)!
-
-        // When
-        let request = sessionManager.upload(imageStream, to: urlString)
-
-        // Then
-        XCTAssertNotNil(request.request)
-        XCTAssertEqual(request.request?.httpMethod, "POST")
-        XCTAssertEqual(request.request?.url?.absoluteString, urlString)
-        XCTAssertNil(request.response)
-    }
 }
 
 // MARK: -
@@ -641,52 +582,6 @@ class RequestDebugDescriptionTestCase: BaseTestCase {
         XCTAssertTrue(cookieComponents.isEmpty)
     }
 
-<<<<<<< HEAD
-=======
-    func testMultipartFormDataRequestWithDuplicateHeadersDebugDescription() {
-        // Given
-        let urlString = "https://httpbin.org/post"
-        let japaneseData = "日本語".data(using: .utf8, allowLossyConversion: false)!
-        let expectation = self.expectation(description: "multipart form data encoding should succeed")
-
-        var request: Request?
-        var components: [String] = []
-
-        // When
-        managerWithContentTypeHeader.upload(
-            multipartFormData: { multipartFormData in
-                multipartFormData.append(japaneseData, withName: "japanese")
-            },
-            to: urlString,
-            encodingCompletion: { result in
-                switch result {
-                case .success(let upload, _, _):
-                    request = upload
-                    components = self.cURLCommandComponents(for: upload)
-
-                    expectation.fulfill()
-                case .failure:
-                    expectation.fulfill()
-                }
-            }
-        )
-
-        waitForExpectations(timeout: timeout, handler: nil)
-
-        debugPrint(request!)
-
-        // Then
-        XCTAssertEqual(components[0..<3], ["$", "curl", "-i"])
-        XCTAssertTrue(components.contains("-X"))
-        XCTAssertEqual(components.last, "\"\(urlString)\"")
-
-        let tokens = request.debugDescription.components(separatedBy: "Content-Type:")
-        XCTAssertTrue(tokens.count == 2, "command should contain a single Content-Type header")
-
-        XCTAssertNotNil(request.debugDescription.range(of: "-H \"Content-Type: multipart/form-data;"))
-    }
-
->>>>>>> master
     func testThatRequestWithInvalidURLDebugDescription() {
         // Given
         let urlString = "invalid_url"

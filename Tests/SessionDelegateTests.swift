@@ -84,11 +84,7 @@ class SessionDelegateTestCase: BaseTestCase {
             }
 
             // When
-<<<<<<< HEAD
             manager.request("https://httpbin.org/get").response { closureResponse in
-=======
-            manager.request("https://httpbin.org/get").responseJSON { closureResponse in
->>>>>>> master
                 response = closureResponse.response
                 expectation.fulfill()
             }
@@ -119,19 +115,11 @@ class SessionDelegateTestCase: BaseTestCase {
                 completion(.performDefaultHandling, nil)
             }
 
-<<<<<<< HEAD
-        // When
-        manager.request("https://httpbin.org/get").response { closureResponse in
-            response = closureResponse.response
-            expectation.fulfill()
-        }
-=======
             // When
-            manager.request("https://httpbin.org/get").responseJSON { closureResponse in
+            manager.request("https://httpbin.org/get").response { closureResponse in
                 response = closureResponse.response
                 expectation.fulfill()
             }
->>>>>>> master
 
             waitForExpectations(timeout: timeout, handler: nil)
 

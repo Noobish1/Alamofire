@@ -242,17 +242,6 @@ class CacheTestCase: BaseTestCase {
     // MARK: - Cache Helper Methods
 
     private func isCachedResponseForNoStoreHeaderExpected() -> Bool {
-<<<<<<< HEAD
-        #if os(iOS)
-            if #available(iOS 8.3, *) {
-                return false
-            } else {
-                return true
-            }
-        #else
-            return false
-        #endif
-=======
     #if os(iOS)
         if #available(iOS 8.3, *) {
             return false
@@ -262,7 +251,6 @@ class CacheTestCase: BaseTestCase {
     #else
         return false
     #endif
->>>>>>> master
     }
 
     // MARK: - Tests

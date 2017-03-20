@@ -402,12 +402,12 @@ class SessionManagerTestCase: BaseTestCase {
         sessionManager.retrier = handler
 
         let expectation = self.expectation(description: "request should eventually fail")
-        var response: DefaultDataResponse?
+        var response: DataResponse<Data>?
 
         // When
         let request = sessionManager.request("https://httpbin.org/basic-auth/user/password")
             .validate()
-            .response { closureResponse in
+            .responseData { closureResponse in
                 response = closureResponse
                 expectation.fulfill()
             }
@@ -417,12 +417,8 @@ class SessionManagerTestCase: BaseTestCase {
         // Then
         XCTAssertEqual(handler.adaptedCount, 2)
         XCTAssertEqual(handler.retryCount, 2)
-<<<<<<< HEAD
-        XCTAssertNotNil(response?.data)
-=======
         XCTAssertEqual(request.retryCount, 1)
         XCTAssertEqual(response?.result.isSuccess, false)
->>>>>>> master
     }
 
     func testThatSessionManagerCallsRequestRetrierWhenRequestInitiallyEncountersAdaptError() {
@@ -437,84 +433,13 @@ class SessionManagerTestCase: BaseTestCase {
         sessionManager.retrier = handler
 
         let expectation = self.expectation(description: "request should eventually fail")
-        var response: DefaultDataResponse?
+        var response: DataResponse<Data>?
 
         // When
         sessionManager.request("https://httpbin.org/basic-auth/user/password")
             .validate()
-            .response { returnedResponse in
+            .responseData { returnedResponse in
                 response = returnedResponse
-                expectation.fulfill()
-            }
-
-        waitForExpectations(timeout: timeout, handler: nil)
-
-        // Then
-        XCTAssertEqual(handler.adaptedCount, 2)
-        XCTAssertEqual(handler.retryCount, 1)
-<<<<<<< HEAD
-        XCTAssertNotNil(response?.data)
-=======
-        XCTAssertEqual(response?.result.isSuccess, true)
-
-        handler.retryErrors.forEach { XCTAssertFalse($0 is AdaptError) }
-    }
-
-    func testThatSessionManagerCallsRequestRetrierWhenDownloadInitiallyEncountersAdaptError() {
-        // Given
-        let handler = RequestHandler()
-        handler.adaptedCount = 1
-        handler.throwsErrorOnSecondAdapt = true
-        handler.shouldApplyAuthorizationHeader = true
-
-        let sessionManager = SessionManager()
-        sessionManager.adapter = handler
-        sessionManager.retrier = handler
-
-        let expectation = self.expectation(description: "request should eventually fail")
-        var response: DownloadResponse<Any>?
-
-        let destination: DownloadRequest.DownloadFileDestination = { _, _ in
-            let fileURL = self.testDirectoryURL.appendingPathComponent("test-output.json")
-            return (fileURL, [.removePreviousFile])
-        }
-
-        // When
-        sessionManager.download("https://httpbin.org/basic-auth/user/password", to: destination)
-            .validate()
-            .responseJSON { jsonResponse in
-                response = jsonResponse
-                expectation.fulfill()
-            }
-
-        waitForExpectations(timeout: timeout, handler: nil)
-
-        // Then
-        XCTAssertEqual(handler.adaptedCount, 2)
-        XCTAssertEqual(handler.retryCount, 1)
-        XCTAssertEqual(response?.result.isSuccess, true)
-
-        handler.retryErrors.forEach { XCTAssertFalse($0 is AdaptError) }
-    }
-
-    func testThatSessionManagerCallsRequestRetrierWhenUploadInitiallyEncountersAdaptError() {
-        // Given
-        let handler = UploadHandler()
-
-        let sessionManager = SessionManager()
-        sessionManager.adapter = handler
-        sessionManager.retrier = handler
-
-        let expectation = self.expectation(description: "request should eventually fail")
-        var response: DataResponse<Any>?
-
-        let uploadData = "upload data".data(using: .utf8, allowLossyConversion: false)!
-
-        // When
-        sessionManager.upload(uploadData, to: "https://httpbin.org/post")
-            .validate()
-            .responseJSON { jsonResponse in
-                response = jsonResponse
                 expectation.fulfill()
             }
 
@@ -538,13 +463,13 @@ class SessionManagerTestCase: BaseTestCase {
         sessionManager.retrier = handler
 
         let expectation = self.expectation(description: "request should eventually fail")
-        var response: DataResponse<Any>?
+        var response: DataResponse<Data>?
 
         // When
         let request = sessionManager.request("https://httpbin.org/basic-auth/user/password")
             .validate()
-            .responseJSON { jsonResponse in
-                response = jsonResponse
+            .responseData { dataResponse in
+                response = dataResponse
                 expectation.fulfill()
             }
 
@@ -555,7 +480,6 @@ class SessionManagerTestCase: BaseTestCase {
         XCTAssertEqual(handler.retryCount, 1)
         XCTAssertEqual(request.retryCount, 1)
         XCTAssertEqual(response?.result.isSuccess, true)
->>>>>>> master
     }
 
     func testThatRequestAdapterErrorThrowsResponseHandlerErrorWhenRequestIsRetried() {
@@ -568,12 +492,12 @@ class SessionManagerTestCase: BaseTestCase {
         sessionManager.retrier = handler
 
         let expectation = self.expectation(description: "request should eventually fail")
-        var response: DefaultDataResponse?
+        var response: DataResponse<Data>?
 
         // When
         let request = sessionManager.request("https://httpbin.org/basic-auth/user/password")
             .validate()
-            .response { defaultResponse in
+            .responseData { defaultResponse in
                 response = defaultResponse
                 expectation.fulfill()
             }
@@ -583,12 +507,8 @@ class SessionManagerTestCase: BaseTestCase {
         // Then
         XCTAssertEqual(handler.adaptedCount, 1)
         XCTAssertEqual(handler.retryCount, 1)
-<<<<<<< HEAD
-        XCTAssertNotNil(response?.data)
-=======
         XCTAssertEqual(request.retryCount, 0)
         XCTAssertEqual(response?.result.isSuccess, false)
->>>>>>> master
 
         if let error = response?.error as? AFError {
             XCTAssertTrue(error.isInvalidURLError)
