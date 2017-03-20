@@ -33,12 +33,15 @@ open class TaskDelegate: NSObject {
     /// The serial operation queue used to execute all operations after the task completes.
     open let queue: OperationQueue
 
+    /// The data returned by the server.
+    public var data: Data? { return nil }
+
+    /// The error generated throughout the lifecyle of the task.
+    public var error: Error?
+
     var task: URLSessionTask? {
         didSet { reset() }
     }
-
-    var data: Data? { return nil }
-    var error: Error?
 
     var initialResponseTime: CFAbsoluteTime?
     var credential: URLCredential?
@@ -104,7 +107,8 @@ open class TaskDelegate: NSObject {
         } else if challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust {
             let host = challenge.protectionSpace.host
 
-            if let serverTrustPolicy = session.serverTrustPolicyManager?.serverTrustPolicy(forHost: host),
+            if
+                let serverTrustPolicy = session.serverTrustPolicyManager?.serverTrustPolicy(forHost: host),
                 let serverTrust = challenge.protectionSpace.serverTrust
             {
                 if serverTrustPolicy.evaluate(serverTrust, forHost: host) {

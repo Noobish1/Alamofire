@@ -108,6 +108,9 @@ open class Request {
     /// The response received from the server, if any.
     open var response: HTTPURLResponse? { return task?.response as? HTTPURLResponse }
 
+    /// The number of times the request has been retried.
+    open internal(set) var retryCount: UInt = 0
+
     let originalTask: TaskConvertible?
 
     var startTime: CFAbsoluteTime?
@@ -343,12 +346,24 @@ open class DataRequest: Request {
         let urlRequest: URLRequest
 
         func task(session: URLSession, adapter: RequestAdapter?, queue: DispatchQueue) throws -> URLSessionTask {
-            let urlRequest = try self.urlRequest.adapt(using: adapter)
-            return queue.syncResult { session.dataTask(with: urlRequest) }
+            do {
+                let urlRequest = try self.urlRequest.adapt(using: adapter)
+                return queue.sync { session.dataTask(with: urlRequest) }
+            } catch {
+                throw AdaptError(error: error)
+            }
         }
     }
 
     // MARK: Properties
+
+    /// The request sent or to be sent to the server.
+    open override var request: URLRequest? {
+        if let request = super.request { return request }
+        if let requestable = originalTask as? Requestable { return requestable.urlRequest }
+
+        return nil
+    }
 
     /// The progress of fetching the response data from the server for the request.
     open var progress: Progress { return dataDelegate.progress }

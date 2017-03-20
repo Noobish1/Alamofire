@@ -68,7 +68,7 @@ open class SessionManager {
                             return "watchOS"
                         #elseif os(tvOS)
                             return "tvOS"
-                        #elseif os(OSX)
+                        #elseif os(macOS)
                             return "OS X"
                         #elseif os(Linux)
                             return "Linux"
@@ -213,12 +213,14 @@ open class SessionManager {
         headers: HTTPHeaders? = nil)
         -> DataRequest
     {
+        var originalRequest: URLRequest?
+
         do {
-            let urlRequest = try URLRequest(url: url, method: method, headers: headers)
-            let encodedURLRequest = try encoding.encode(urlRequest, with: parameters)
+            originalRequest = try URLRequest(url: url, method: method, headers: headers)
+            let encodedURLRequest = try encoding.encode(originalRequest!, with: parameters)
             return request(encodedURLRequest)
         } catch {
-            return request(failedWith: error)
+            return request(originalRequest, failedWith: error)
         }
     }
 
@@ -230,9 +232,11 @@ open class SessionManager {
     ///
     /// - returns: The created `DataRequest`.
     open func request(_ urlRequest: URLRequestConvertible) -> DataRequest {
+        var originalRequest: URLRequest?
+
         do {
-            let originalRequest = try urlRequest.asURLRequest()
-            let originalTask = DataRequest.Requestable(urlRequest: originalRequest)
+            originalRequest = try urlRequest.asURLRequest()
+            let originalTask = DataRequest.Requestable(urlRequest: originalRequest!)
 
             let task = try originalTask.task(session: session, adapter: adapter, queue: queue)
             let request = DataRequest(session: session, requestTask: .data(originalTask, task))
@@ -243,15 +247,29 @@ open class SessionManager {
 
             return request
         } catch {
-            return request(failedWith: error)
+            return request(originalRequest, failedWith: error)
         }
     }
 
     // MARK: Private - Request Implementation
 
-    private func request(failedWith error: Error) -> DataRequest {
-        let request = DataRequest(session: session, requestTask: .data(nil, nil), error: error)
-        if startRequestsImmediately { request.resume() }
+    private func request(_ urlRequest: URLRequest?, failedWith error: Error) -> DataRequest {
+        var requestTask: Request.RequestTask = .data(nil, nil)
+
+        if let urlRequest = urlRequest {
+            let originalTask = DataRequest.Requestable(urlRequest: urlRequest)
+            requestTask = .data(originalTask, nil)
+        }
+
+        let underlyingError = error.underlyingAdaptError ?? error
+        let request = DataRequest(session: session, requestTask: requestTask, error: underlyingError)
+
+        if let retrier = retrier, error is AdaptError {
+            allowRetrier(retrier, toRetry: request, with: underlyingError)
+        } else {
+            if startRequestsImmediately { request.resume() }
+        }
+
         return request
     }
 
@@ -265,6 +283,7 @@ open class SessionManager {
 
             request.delegate.task = task // resets all task delegate data
 
+            request.retryCount += 1
             request.startTime = CFAbsoluteTimeGetCurrent()
             request.endTime = nil
 
@@ -272,8 +291,35 @@ open class SessionManager {
 
             return true
         } catch {
-            request.delegate.error = error
+            request.delegate.error = error.underlyingAdaptError ?? error
             return false
+        }
+    }
+
+    private func allowRetrier(_ retrier: RequestRetrier, toRetry request: Request, with error: Error) {
+        DispatchQueue.utility.async { [weak self] in
+            guard let strongSelf = self else { return }
+
+            retrier.should(strongSelf, retry: request, with: error) { shouldRetry, timeDelay in
+                guard let strongSelf = self else { return }
+
+                guard shouldRetry else {
+                    if strongSelf.startRequestsImmediately { request.resume() }
+                    return
+                }
+
+                DispatchQueue.utility.after(timeDelay) {
+                    guard let strongSelf = self else { return }
+
+                    let retrySucceeded = strongSelf.retry(request)
+
+                    if retrySucceeded, let task = request.task {
+                        strongSelf.delegate[task] = request
+                    } else {
+                        if strongSelf.startRequestsImmediately { request.resume() }
+                    }
+                }
+            }
         }
     }
 }

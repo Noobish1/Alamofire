@@ -39,8 +39,8 @@ import XCTest
 /// - Verify whether the response came from the cache or from the network
 ///     - This is determined by whether the cached response timestamp matches the new response timestamp
 ///
-/// An important thing to note is the difference in behavior between iOS and OS X. On iOS, a response with
-/// a `Cache-Control` header value of `no-store` is still written into the `NSURLCache` where on OS X, it is not.
+/// An important thing to note is the difference in behavior between iOS and macOS. On iOS, a response with
+/// a `Cache-Control` header value of `no-store` is still written into the `NSURLCache` where on macOS, it is not.
 /// The different tests below reflect and demonstrate this behavior.
 ///
 /// For information about `Cache-Control` HTTP headers, please refer to RFC 2616 - Section 14.9.
@@ -242,6 +242,7 @@ class CacheTestCase: BaseTestCase {
     // MARK: - Cache Helper Methods
 
     private func isCachedResponseForNoStoreHeaderExpected() -> Bool {
+<<<<<<< HEAD
         #if os(iOS)
             if #available(iOS 8.3, *) {
                 return false
@@ -251,6 +252,17 @@ class CacheTestCase: BaseTestCase {
         #else
             return false
         #endif
+=======
+    #if os(iOS)
+        if #available(iOS 8.3, *) {
+            return false
+        } else {
+            return true
+        }
+    #else
+        return false
+    #endif
+>>>>>>> master
     }
 
     // MARK: - Tests

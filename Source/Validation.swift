@@ -162,7 +162,7 @@ extension DataRequest {
     /// - returns: The request.
     @discardableResult
     public func validate(_ validation: @escaping Validation) -> Self {
-        let validationExecution: () -> Void = {
+        let validationExecution: () -> Void = { [unowned self] in
             if
                 let response = self.response,
                 self.delegate.error == nil,
@@ -186,7 +186,7 @@ extension DataRequest {
     /// - returns: The request.
     @discardableResult
     public func validate<S: Sequence>(statusCode acceptableStatusCodes: S) -> Self where S.Iterator.Element == Int {
-        return validate { _, response, _ in
+        return validate { [unowned self] _, response, _ in
             return self.validate(statusCode: acceptableStatusCodes, response: response)
         }
     }
@@ -200,7 +200,7 @@ extension DataRequest {
     /// - returns: The request.
     @discardableResult
     public func validate<S: Sequence>(contentType acceptableContentTypes: S) -> Self where S.Iterator.Element == String {
-        return validate { _, response, data in
+        return validate { [unowned self] _, response, data in
             return self.validate(contentType: acceptableContentTypes, response: response, data: data)
         }
     }

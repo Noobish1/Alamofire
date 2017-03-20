@@ -78,6 +78,16 @@ public enum AFError: Error {
     case responseSerializationFailed(reason: ResponseSerializationFailureReason)
 }
 
+// MARK: - Adapt Error
+
+struct AdaptError: Error {
+    let error: Error
+}
+
+extension Error {
+    var underlyingAdaptError: Error? { return (self as? AdaptError)?.error }
+}
+
 // MARK: - Error Booleans
 
 extension AFError {
@@ -187,8 +197,8 @@ extension AFError.ResponseValidationFailureReason {
 
     var responseContentType: String? {
         switch self {
-        case .unacceptableContentType(_, let reponseType):
-            return reponseType
+        case .unacceptableContentType(_, let responseType):
+            return responseType
         default:
             return nil
         }

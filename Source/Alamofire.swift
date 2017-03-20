@@ -24,7 +24,7 @@
 
 import Foundation
 
-/// Types adopting the `URLConvertible` protocol can be used to construct URLs, which are then used to construct 
+/// Types adopting the `URLConvertible` protocol can be used to construct URLs, which are then used to construct
 /// URL requests.
 public protocol URLConvertible {
     /// Returns a URL that conforms to RFC 2396 or throws an `Error`.
